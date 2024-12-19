@@ -2,6 +2,16 @@ const mongoose = require('mongoose');
 const Event = require('../models/Event');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config(); 
+const cloudinary = require('cloudinary').v2; 
+const { upload } = require('../config/cloudinary'); 
+
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 exports.getEvents = async (req, res) => {
   try {
@@ -39,25 +49,31 @@ exports.addEvent = async (req, res) => {
     res.status(500).json({ error: 'Error adding event', details: error.message });
   }
 };
+
 exports.updateEvent = async (req, res) => {
   const { id } = req.params;
-  const { eventname, date, time, location } = req.body;
+  const { eventname, date, time, location, active } = req.body;
 
   try {
-    const updateData = { eventname, date, time, location };
+    const updateData = { eventname, date, time, location, active: active === 'true' };
 
     
     if (req.file) {
-      updateData.image = req.file.path; 
+      console.log('File upload detected:', req.file);
+
+      
+      const uploadResult = await cloudinary.uploader.upload(req.file.path);
+      updateData.image = uploadResult.secure_url; 
 
       
       const oldEvent = await Event.findById(id);
       if (oldEvent && oldEvent.image) {
-        const publicId = oldEvent.image.split('/').pop().split('.')[0];
-        await cloudinary.uploader.destroy(publicId);
+        const publicId = oldEvent.image.split('/').pop().split('.')[0]; 
+        await cloudinary.uploader.destroy(publicId); 
       }
     }
 
+    
     const updatedEvent = await Event.findByIdAndUpdate(id, updateData, { new: true });
 
     if (!updatedEvent) {
@@ -66,6 +82,7 @@ exports.updateEvent = async (req, res) => {
 
     res.status(200).json(updatedEvent);
   } catch (error) {
+    console.error('Error updating event:', error.message);
     res.status(500).json({ error: 'Error updating event', details: error.message });
   }
 };
