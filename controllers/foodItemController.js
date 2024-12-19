@@ -77,7 +77,7 @@ exports.toggleFoodItem = async (req, res) => {
       return res.status(404).json({ message: 'Food item not found' });
     }
 
-    foodItem.isAvailable = !foodItem.isAvailable;
+    foodItem.isActive = !foodItem.isActive;
     await foodItem.save();
 
     res.json(foodItem);
