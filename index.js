@@ -35,7 +35,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/auth', authRoutes);
+app.use('/api', authRoutes);
 app.use('/api', foodRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', eventRoutes);
